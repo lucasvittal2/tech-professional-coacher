@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ${APP_NAME}
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`monster-dev.tech-professional-coacher.vital`)
+      middlewares:
+        - name: test-auth
+          namespace: default
+      services:
+        - name: ${APP_NAME}
+          port: 8070

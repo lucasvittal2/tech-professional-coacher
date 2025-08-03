@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ${APP_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${APP_NAME}
+    spec:
+      containers:
+        - name: ${APP_NAME}
+          image: ${ARTIFACT_REGISTRY_URI}/${APP_NAME}:${TAG}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8070
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "600m"
+          envFrom:                # <-- Move here, under the container!
+            - secretRef:
+                name: tech-professional-coacher-secrets

@@ -1,0 +1,44 @@
+---
+name: Deploy api
+description: Docker Build and Push to Artifact Registry
+
+inputs:
+
+  APP_NAME:
+    required: true
+    description: "The label used to reference the image"
+
+  IMAGE_TAG:
+    required: true
+    description: "The label used to reference the image"
+
+  ARTIFACT_REGISTRY_URI:
+    required: true
+    description: "The URI used to push  container on gcp"
+
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Build and Push Docker Image
+      run: |
+        uv build
+        docker build -t ${{ inputs.ARTIFACT_REGISTRY_URI }}/${{ inputs.APP_NAME }}:${{ inputs.IMAGE_TAG }} .
+        docker push ${{ inputs.ARTIFACT_REGISTRY_URI }}/${{ inputs.APP_NAME }}:${{ inputs.IMAGE_TAG }}
+      shell: bash
+
+    - name: Docker System Prune
+      run: docker system prune -f
+      shell: bash
+
+    - name: Update Kubernetes Deployment
+      run: |
+        export APP_NAME=${{ inputs.APP_NAME }}
+        export TAG=${{ inputs.IMAGE_TAG }}
+        export ARTIFACT_REGISTRY_URI=${{ inputs.ARTIFACT_REGISTRY_URI }}
+        kubectl delete secret ${APP_NAME}-secrets --ignore-not-found
+        kubectl create secret generic ${APP_NAME}-secrets --from-env-file=.env
+        envsubst < kubernetes/dev/deployment.yaml | kubectl apply -f -
+        kubectl rollout restart deployment/${APP_NAME}
+      shell: bash

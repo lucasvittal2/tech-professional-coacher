@@ -1,0 +1,70 @@
+name: Build and Deploy the application
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+      - stage
+    types:
+      - closed
+
+env:
+  ENVIRONMENT: "dev"
+  VERSION_FILE: 'tech_professional_coacher/__init__.py'
+  IMAGE: "tech_professional_coacher"
+  TAG: "v1"
+  ARTIFACT_REGISTRY_URI: "lucasvittal"
+
+jobs:
+
+  build-deploy:
+    runs-on: self-hosted
+    environment: dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Set Package Version
+        id: set_version
+        uses: ./.github/actions/set-version
+        with:
+          FILE_PATH: ${{ env.VERSION_FILE }}
+
+      - name: Install dependencies
+        id: poetry_install
+        uses: ./.github/actions/install-dependencies
+
+      - name: Create .env file from secrets
+        run: |
+          echo "ADD_LOGS_TO_CONSOLE=${{ vars.ADD_LOGS_TO_CONSOLE }}" >> .env
+          echo "LANGSMITH_PROJECT=${{ vars.LANGSMITH_PROJECT }}" >> .env
+          echo "LANGSMITH_TRACING=${{ vars.LANGSMITH_TRACING }}" >> .env
+          echo "OTEL_EXPORTER_OTLP_TRACES_INSECURE=${{ vars.OTEL_EXPORTER_OTLP_TRACES_INSECURE }}" >> .env
+          echo "OTEL_SDK_DISABLED=${{ vars.OTEL_SDK_DISABLED }}" >> .env
+
+          echo "KEYCLOAK_JWKS_URL=${{ secrets.KEYCLOAK_JWKS_URL }}" >> .env
+          echo "LANGCHAIN_API_KEY=${{ secrets.LANGCHAIN_API_KEY }}" >> .env
+          echo "LANGSMITH_API_KEY=${{ secrets.LANGSMITH_API_KEY }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT }}" >> .env
+          echo "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT }}" >> .env
+          echo "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}" >> .env
+
+
+      - name: Deploy Application to Kubernetes Cluster
+        uses: ./.github/actions/deploy
+        with:
+          APP_NAME: ${{ env.IMAGE }}
+          IMAGE_TAG: ${{ env.TAG }}
+          ARTIFACT_REGISTRY_URI: ${{ env.ARTIFACT_REGISTRY_URI }}
+
+      - name: Remove .env file
+        run: rm .env
+        if: always()

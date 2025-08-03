@@ -1,0 +1,13 @@
+---
+name: Docker Build and Push
+description: Docker Build and Push to Artifact Registry
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build and Push Docker Image
+      run: |
+        pip install uv --break-system
+        uv sync
+        source .venv/bin/activate
+      shell: bash

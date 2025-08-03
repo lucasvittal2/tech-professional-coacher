@@ -1,0 +1,41 @@
+# Diretórios e arquivos Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+.venv/
+env/
+venv/
+
+# Metadados de build e distribuições
+build/
+*.egg-info/
+.eggs/
+
+# Arquivos de controle de pacote
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Diretórios de controle de versão
+.git/
+.gitignore
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Arquivos de logs e caches
+*.log
+*.tmp
+.cache/
+.mypy_cache/
+.pytest_cache/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
